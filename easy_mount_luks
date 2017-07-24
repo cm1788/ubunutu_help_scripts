@@ -48,6 +48,13 @@ do
   esac
 done
 
+# ###########################################################
+# Check that at least two arguments are provided 
+if [ "$#" -lt 2 ]; then
+    echo "Need at least two arguments: DRIVE and MOUNTPOINT (optional: VG_NAME)."
+    exit 1
+fi
+
 DRIVE=$1
 MOUNTPOINT=$2
 VG_NAME=${3-root}
