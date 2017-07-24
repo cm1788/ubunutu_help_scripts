@@ -1,0 +1,64 @@
+#!/bin/bash
+# ###########################################################
+# Script to mount LUKS encrypted drive (Ubuntu).  
+# This is free and open software. 
+# ###########################################################
+# The script assumes you wish to mount a logical volume 
+# from a LUKS encrypted drive or partition (e.g. as encrypted 
+# by Ubuntu on installation).
+#
+# By default it is assumed the volume is called 'root' i.e.
+# it was an ecrpyted root / drive on another system. It is 
+# possible to specify VG_NAME if known (e.g. 'home'). If 
+# volume fails to mount run 'ls /dev/mapper/' and locate the
+# volume you wish to mount: ubuntu-vg-<VG_NAME> before 
+# re-running this script. 
+
+# Requires: lvm2 (vgscan, vgchange)
+# Credit: adapted from db429 @
+# https://askubuntu.com/questions/844132/how-to-repair-boot-on-luks-encrypted-harddrive
+#
+# ###########################################################
+# Obtain current effective user ID.
+CURRENT_EUID=$(id --user)
+
+# Quit if the script is not being run by root.
+if [ "$CURRENT_EUID" -ne 0 ]; then
+    echo "$0 must be run as root. Example: sudo $0"
+    exit 1
+fi
+
+# ###########################################################
+show_usage ()
+{
+  printf "
+Usage: %s  [drive to mount] [mount location] [optional: volume name]  \n
+" $(basename $0) >&2
+  exit 1
+}
+
+# ###########################################################
+while getopts 'h?' OPTION
+do
+  case $OPTION in
+  h)    show_usage
+        ;;
+  ?)    show_usage
+        ;;
+  esac
+done
+
+DRIVE=$1
+MOUNTPOINT=$2
+VG_NAME=${3-root}
+echo $DRIVE
+echo $MOUNTPOINT
+
+# ###########################################################
+# Open drive, locate and activate volume group.
+sudo cryptsetup luksOpen $DRIVE sda5_crypt
+sudo vgscan --mknodes
+sudo vgchange -ay
+
+# Mount volume at specified mount point.
+sudo mount /dev/mapper/ubuntu--vg-$VG_NAME $MOUNTPOINT
