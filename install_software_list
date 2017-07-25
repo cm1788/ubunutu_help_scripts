@@ -90,6 +90,9 @@ echo "Adding software listed in: $SOFT_FILE..."
 
 mkdir install_logs -p 
 
+sucf="install_logs/success.log"
+failf="install_logs/fail.log"
+
 while IFS='' read -r line || [[ -n "$line" ]]; do
 
     logf="install_logs/$line.log" 
@@ -98,8 +101,10 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
     if [[ $? > 0 ]]
     then
         echo "Failed to install: $line" 
+        echo $line >> $failf
     else
         echo "Successfully installed: $line"
+        echo $line >> $sucf
     fi
 done < "$SOFT_FILE"
 
